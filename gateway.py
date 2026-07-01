@@ -15,10 +15,10 @@ from mcp.server.fastmcp import FastMCP
 from mcp.server.transport_security import TransportSecuritySettings
 from starlette.applications import Starlette
 from starlette.middleware.cors import CORSMiddleware
-from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse, PlainTextResponse
 from starlette.routing import Route
+from starlette.types import ASGIApp, Receive, Scope, Send
 
 import reminders
 import scheduler
@@ -91,15 +91,25 @@ def delete_reminder(reminder_id: str) -> dict:
     return {"deleted": deleted, "id": reminder_id}
 
 
-class AuthMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):
-        if request.url.path == "/health":
-            return await call_next(request)
-        if GATEWAY_AUTH_TOKEN:
-            expected = f"Bearer {GATEWAY_AUTH_TOKEN}"
-            if request.headers.get("authorization") != expected:
-                return PlainTextResponse("Unauthorized", status_code=401)
-        return await call_next(request)
+class AuthMiddleware:
+    """Middleware ASGI puro (não usa BaseHTTPMiddleware, que quebra os
+    endpoints crus de streaming do transporte SSE do MCP com
+    'AssertionError: Unexpected message')."""
+
+    def __init__(self, app: ASGIApp):
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http" or not GATEWAY_AUTH_TOKEN or scope.get("path") == "/health":
+            return await self.app(scope, receive, send)
+
+        headers = dict(scope.get("headers", []))
+        auth_val = headers.get(b"authorization", b"").decode("latin-1")
+        if auth_val != f"Bearer {GATEWAY_AUTH_TOKEN}":
+            response = PlainTextResponse("Unauthorized", status_code=401)
+            return await response(scope, receive, send)
+
+        return await self.app(scope, receive, send)
 
 
 async def health_check(request: Request) -> JSONResponse:
