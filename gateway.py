@@ -12,6 +12,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 
 from mcp.server.fastmcp import FastMCP
+from mcp.server.transport_security import TransportSecuritySettings
 from starlette.applications import Starlette
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -27,8 +28,23 @@ logger = logging.getLogger("reminder-mcp")
 
 GATEWAY_AUTH_TOKEN = os.environ.get("GATEWAY_AUTH_TOKEN", "")
 DEFAULT_TZ = os.environ.get("REMINDER_TZ", "America/Sao_Paulo")
+MCP_ALLOWED_HOSTS = os.environ.get("MCP_ALLOWED_HOSTS", "")
 
 mcp = FastMCP("reminder")
+
+# FastMCP habilita por padrão uma proteção anti DNS-rebinding que só aceita
+# Host localhost/127.0.0.1 — isso bloqueia qualquer domínio público (ex: Railway)
+# com "Invalid Host header". Se MCP_ALLOWED_HOSTS não for definido, desligamos
+# essa checagem (a rota já é protegida pelo GATEWAY_AUTH_TOKEN quando configurado).
+if MCP_ALLOWED_HOSTS:
+    hosts = [h.strip() for h in MCP_ALLOWED_HOSTS.split(",") if h.strip()]
+    mcp.settings.transport_security = TransportSecuritySettings(
+        enable_dns_rebinding_protection=True,
+        allowed_hosts=hosts,
+        allowed_origins=hosts,
+    )
+else:
+    mcp.settings.transport_security = TransportSecuritySettings(enable_dns_rebinding_protection=False)
 
 
 def _parse_when(when: str) -> datetime:
