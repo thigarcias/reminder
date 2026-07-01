@@ -57,17 +57,38 @@ def _parse_when(when: str) -> datetime:
 
 
 @mcp.tool()
-def create_reminder(message: str, when: str) -> dict:
+def create_reminder(
+    message: str,
+    when: str,
+    recorrencia: int = 1,
+    recorrencia_intervalo: int | None = None,
+) -> dict:
     """Cria um lembrete que dispara uma notificação Pushover no horário informado.
 
     Args:
         message: Texto do lembrete a ser enviado na notificação.
         when: Data/hora em formato ISO 8601 (ex: "2026-07-01T09:00:00").
               Se não tiver timezone, é interpretado no fuso configurado
-              (padrão America/Sao_Paulo).
+              (padrão America/Sao_Paulo). É o horário da primeira ocorrência.
+        recorrencia: Quantas vezes notificar no total. Padrão 1 (dispara uma
+              única vez e não se repete).
+        recorrencia_intervalo: Intervalo em segundos entre cada repetição.
+              Obrigatório quando recorrencia > 1 (ex: 3600 para repetir a
+              cada hora, 86400 para repetir diariamente).
     """
+    if recorrencia < 1:
+        raise ValueError("recorrencia deve ser maior ou igual a 1")
+    if recorrencia > 1 and (not recorrencia_intervalo or recorrencia_intervalo <= 0):
+        raise ValueError(
+            "recorrencia_intervalo (em segundos, > 0) é obrigatório quando recorrencia > 1"
+        )
     remind_at = _parse_when(when)
-    return reminders.create_reminder(message, remind_at)
+    return reminders.create_reminder(
+        message,
+        remind_at,
+        recorrencia=recorrencia,
+        recorrencia_intervalo=recorrencia_intervalo,
+    )
 
 
 @mcp.tool()

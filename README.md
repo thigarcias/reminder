@@ -6,14 +6,24 @@ via [Pushover](https://pushover.net) no horário programado.
 
 ## Tools MCP
 
-- `create_reminder(message: str, when: str)` — cria um lembrete. `when` é
-  ISO 8601 (ex: `"2026-07-01T09:00:00"`); sem timezone é interpretado no
-  fuso `REMINDER_TZ` (padrão `America/Sao_Paulo`).
-- `list_reminders(include_sent: bool = False)` — lista lembretes.
-- `delete_reminder(reminder_id: str)` — remove um lembrete.
+- `create_reminder(message: str, when: str, recorrencia: int = 1, recorrencia_intervalo: int | None = None)`
+  — cria um lembrete. `when` é ISO 8601 (ex: `"2026-07-01T09:00:00"`); sem
+  timezone é interpretado no fuso `REMINDER_TZ` (padrão `America/Sao_Paulo`)
+  e é o horário da primeira ocorrência. `recorrencia` é quantas vezes notificar
+  no total (padrão 1, ou seja, dispara uma única vez). `recorrencia_intervalo`
+  é o intervalo em segundos entre cada repetição, obrigatório quando
+  `recorrencia > 1` (ex: `3600` para repetir a cada hora, `86400` para
+  repetir diariamente).
+- `list_reminders(include_sent: bool = False)` — lista lembretes. Cada item
+  inclui `recorrencia`, `recorrencia_intervalo` e `ocorrencias_enviadas`.
+- `delete_reminder(reminder_id: str)` — remove um lembrete (cancela também
+  as repetições futuras).
 
 Um agendador (`APScheduler`) roda a cada 20s dentro do próprio processo,
-verifica lembretes vencidos e envia a notificação Pushover.
+verifica lembretes vencidos e envia a notificação Pushover. Se o lembrete
+ainda tiver repetições pendentes, ele reagenda `remind_at` somando
+`recorrencia_intervalo`; quando a última ocorrência é enviada, marca o
+lembrete como concluído.
 
 ## Rodando localmente
 

@@ -23,8 +23,17 @@ async def _check_due_reminders() -> None:
             message=reminder["message"],
         )
         if ok:
-            reminders.mark_sent(reminder["id"])
-            logger.info("Notificação enviada para lembrete %s", reminder["id"])
+            updated = reminders.register_occurrence_sent(reminder["id"])
+            if updated and not updated["sent"]:
+                logger.info(
+                    "Notificação %s/%s enviada para lembrete %s, próxima em %s",
+                    updated["ocorrencias_enviadas"],
+                    updated["recorrencia"],
+                    reminder["id"],
+                    updated["remind_at"],
+                )
+            else:
+                logger.info("Notificação final enviada para lembrete %s", reminder["id"])
         else:
             logger.warning("Falha ao notificar lembrete %s, tentará novamente", reminder["id"])
 
