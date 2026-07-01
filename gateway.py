@@ -82,6 +82,12 @@ def create_reminder(
         raise ValueError(
             "recorrencia_intervalo (em segundos, > 0) é obrigatório quando recorrencia > 1"
         )
+    if recorrencia == 1 and recorrencia_intervalo:
+        raise ValueError(
+            "recorrencia_intervalo foi informado mas recorrencia é 1 (padrão); "
+            "defina recorrencia > 1 para o lembrete realmente se repetir, "
+            "senão ele é enviado uma única vez e some da lista"
+        )
     remind_at = _parse_when(when)
     return reminders.create_reminder(
         message,

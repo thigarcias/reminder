@@ -13,7 +13,9 @@ via [Pushover](https://pushover.net) no horário programado.
   no total (padrão 1, ou seja, dispara uma única vez). `recorrencia_intervalo`
   é o intervalo em segundos entre cada repetição, obrigatório quando
   `recorrencia > 1` (ex: `3600` para repetir a cada hora, `86400` para
-  repetir diariamente).
+  repetir diariamente). Informar `recorrencia_intervalo` sem também definir
+  `recorrencia > 1` é rejeitado (senão o lembrete dispara uma única vez e
+  some da lista, mesmo parecendo configurado para repetir).
 - `list_reminders(include_sent: bool = False)` — lista lembretes. Cada item
   inclui `recorrencia`, `recorrencia_intervalo` e `ocorrencias_enviadas`.
 - `delete_reminder(reminder_id: str)` — remove um lembrete (cancela também
