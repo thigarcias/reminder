@@ -62,11 +62,14 @@ def create_reminder(
     when: str,
     recorrencia: int = 1,
     recorrencia_intervalo: int | None = None,
+    titulo: str | None = None,
+    prioridade: int = 1,
 ) -> dict:
     """Cria um lembrete que dispara uma notificação Pushover no horário informado.
 
     Args:
-        message: Texto do lembrete a ser enviado na notificação.
+        message: Texto do lembrete a ser enviado na notificação. É o corpo da
+              mensagem e pode ser detalhado (o Pushover aceita até 1024 chars).
         when: Data/hora em formato ISO 8601 (ex: "2026-07-01T09:00:00").
               Se não tiver timezone, é interpretado no fuso configurado
               (padrão America/Sao_Paulo). É o horário da primeira ocorrência.
@@ -75,6 +78,12 @@ def create_reminder(
         recorrencia_intervalo: Intervalo em segundos entre cada repetição.
               Obrigatório quando recorrencia > 1 (ex: 3600 para repetir a
               cada hora, 86400 para repetir diariamente).
+        titulo: Título curto da notificação (aparece em negrito acima da
+              mensagem). Opcional; se omitido, usa "Lembrete".
+        prioridade: Nível de prioridade da notificação no Pushover, de -2 a 2:
+              -2 = silenciosa (sem som/vibração), -1 = baixa (sem som),
+              0 = normal, 1 = alta (padrão, sempre com som), 2 = emergência
+              (repete até você confirmar). Padrão 1.
     """
     if recorrencia < 1:
         raise ValueError("recorrencia deve ser maior ou igual a 1")
@@ -88,12 +97,16 @@ def create_reminder(
             "defina recorrencia > 1 para o lembrete realmente se repetir, "
             "senão ele é enviado uma única vez e some da lista"
         )
+    if prioridade < -2 or prioridade > 2:
+        raise ValueError("prioridade deve estar entre -2 e 2 (padrão Pushover)")
     remind_at = _parse_when(when)
     return reminders.create_reminder(
         message,
         remind_at,
         recorrencia=recorrencia,
         recorrencia_intervalo=recorrencia_intervalo,
+        titulo=titulo,
+        prioridade=prioridade,
     )
 
 

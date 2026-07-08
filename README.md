@@ -6,18 +6,23 @@ via [Pushover](https://pushover.net) no horário programado.
 
 ## Tools MCP
 
-- `create_reminder(message: str, when: str, recorrencia: int = 1, recorrencia_intervalo: int | None = None)`
+- `create_reminder(message: str, when: str, recorrencia: int = 1, recorrencia_intervalo: int | None = None, titulo: str | None = None, prioridade: int = 1)`
   — cria um lembrete. `when` é ISO 8601 (ex: `"2026-07-01T09:00:00"`); sem
   timezone é interpretado no fuso `REMINDER_TZ` (padrão `America/Sao_Paulo`)
-  e é o horário da primeira ocorrência. `recorrencia` é quantas vezes notificar
-  no total (padrão 1, ou seja, dispara uma única vez). `recorrencia_intervalo`
-  é o intervalo em segundos entre cada repetição, obrigatório quando
-  `recorrencia > 1` (ex: `3600` para repetir a cada hora, `86400` para
-  repetir diariamente). Informar `recorrencia_intervalo` sem também definir
-  `recorrencia > 1` é rejeitado (senão o lembrete dispara uma única vez e
-  some da lista, mesmo parecendo configurado para repetir).
+  e é o horário da primeira ocorrência. `message` é o corpo da notificação e
+  pode ser detalhado (o Pushover aceita até 1024 caracteres). `recorrencia` é
+  quantas vezes notificar no total (padrão 1, ou seja, dispara uma única vez).
+  `recorrencia_intervalo` é o intervalo em segundos entre cada repetição,
+  obrigatório quando `recorrencia > 1` (ex: `3600` para repetir a cada hora,
+  `86400` para repetir diariamente). Informar `recorrencia_intervalo` sem também
+  definir `recorrencia > 1` é rejeitado (senão o lembrete dispara uma única vez
+  e some da lista, mesmo parecendo configurado para repetir). `titulo` é o
+  título curto da notificação (padrão `"Lembrete"`). `prioridade` é o nível
+  Pushover de `-2` a `2`: `-2` silenciosa, `-1` baixa, `0` normal, `1` alta
+  (padrão), `2` emergência (reenvia a cada 60s por até 1h até você confirmar).
 - `list_reminders(include_sent: bool = False)` — lista lembretes. Cada item
-  inclui `recorrencia`, `recorrencia_intervalo` e `ocorrencias_enviadas`.
+  inclui `recorrencia`, `recorrencia_intervalo`, `ocorrencias_enviadas`,
+  `titulo` e `prioridade`.
 - `delete_reminder(reminder_id: str)` — remove um lembrete (cancela também
   as repetições futuras).
 

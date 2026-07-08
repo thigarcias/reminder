@@ -19,8 +19,9 @@ async def _check_due_reminders() -> None:
     now = datetime.now(timezone.utc)
     for reminder in reminders.due_reminders(now):
         ok = await send_notification(
-            title="Lembrete",
+            title=reminder.get("titulo") or "Lembrete",
             message=reminder["message"],
+            priority=reminder.get("prioridade", 1),
         )
         if ok:
             updated = reminders.register_occurrence_sent(reminder["id"])

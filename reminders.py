@@ -32,7 +32,9 @@ def init_db() -> None:
                 sent INTEGER NOT NULL DEFAULT 0,
                 recorrencia INTEGER NOT NULL DEFAULT 1,
                 recorrencia_intervalo INTEGER,
-                ocorrencias_enviadas INTEGER NOT NULL DEFAULT 0
+                ocorrencias_enviadas INTEGER NOT NULL DEFAULT 0,
+                titulo TEXT,
+                prioridade INTEGER NOT NULL DEFAULT 1
             )
             """
         )
@@ -42,6 +44,8 @@ def init_db() -> None:
             "recorrencia": "ALTER TABLE reminders ADD COLUMN recorrencia INTEGER NOT NULL DEFAULT 1",
             "recorrencia_intervalo": "ALTER TABLE reminders ADD COLUMN recorrencia_intervalo INTEGER",
             "ocorrencias_enviadas": "ALTER TABLE reminders ADD COLUMN ocorrencias_enviadas INTEGER NOT NULL DEFAULT 0",
+            "titulo": "ALTER TABLE reminders ADD COLUMN titulo TEXT",
+            "prioridade": "ALTER TABLE reminders ADD COLUMN prioridade INTEGER NOT NULL DEFAULT 1",
         }
         for col, ddl in migrations.items():
             if col not in existing_cols:
@@ -53,6 +57,8 @@ def create_reminder(
     remind_at: datetime,
     recorrencia: int = 1,
     recorrencia_intervalo: int | None = None,
+    titulo: str | None = None,
+    prioridade: int = 1,
 ) -> dict:
     reminder_id = str(uuid.uuid4())
     created_at = datetime.now(timezone.utc).isoformat()
@@ -60,10 +66,20 @@ def create_reminder(
         conn.execute(
             """
             INSERT INTO reminders
-                (id, message, remind_at, created_at, sent, recorrencia, recorrencia_intervalo, ocorrencias_enviadas)
-            VALUES (?, ?, ?, ?, 0, ?, ?, 0)
+                (id, message, remind_at, created_at, sent, recorrencia, recorrencia_intervalo,
+                 ocorrencias_enviadas, titulo, prioridade)
+            VALUES (?, ?, ?, ?, 0, ?, ?, 0, ?, ?)
             """,
-            (reminder_id, message, remind_at.isoformat(), created_at, recorrencia, recorrencia_intervalo),
+            (
+                reminder_id,
+                message,
+                remind_at.isoformat(),
+                created_at,
+                recorrencia,
+                recorrencia_intervalo,
+                titulo,
+                prioridade,
+            ),
         )
     return get_reminder(reminder_id)
 
