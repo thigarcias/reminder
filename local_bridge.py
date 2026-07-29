@@ -1,5 +1,5 @@
-"""Ponte local stdio -> SSE remoto, para conectar um cliente MCP local
-(ex: Claude Desktop) ao servidor de lembretes rodando no Railway."""
+"""Ponte local stdio -> HTTP SSE remoto, para conectar um cliente MCP local
+(ex: Claude Desktop, Cursor) ao servidor de lembretes rodando na Vercel."""
 
 import asyncio
 import sys
@@ -8,8 +8,8 @@ import anyio
 from mcp.client.sse import sse_client
 from mcp.server.stdio import stdio_server
 
-# Ajuste para a URL do seu deploy no Railway
-DEFAULT_URL = "https://reminder-mcp.up.railway.app/sse"
+# Ajuste para a URL do seu deploy na Vercel (ou http://localhost:3000/api/mcp para dev local)
+DEFAULT_URL = "https://reminder-mcp.vercel.app/api/mcp"
 
 
 async def pipe(source, dest):
@@ -30,7 +30,7 @@ async def main() -> None:
 
     async with stdio_server() as (local_read, local_write):
         async with sse_client(url, headers=headers) as (remote_read, remote_write):
-            async with anyio.create_task_group() as tg:
+            async with anyio.createTaskGroup() if hasattr(anyio, "createTaskGroup") else anyio.create_task_group() as tg:
                 tg.start_soon(pipe, local_read, remote_write)
                 tg.start_soon(pipe, remote_read, local_write)
 

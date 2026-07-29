@@ -1,6 +1,23 @@
+# Next.js / Node.js
+node_modules/
+.next/
+out/
+build/
+*.log
+
+# Environment & Databases
+.env
+.env.local
+*.db
+*.db-journal
+
+# Python & Venv
 __pycache__/
 *.pyc
 .venv/
 venv/
-.env
-reminders.db
+
+# IDE / OS
+.DS_Store
+.vscode/
+.idea/
