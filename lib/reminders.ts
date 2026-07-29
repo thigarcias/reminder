@@ -18,19 +18,66 @@ function getSupabase(): SupabaseClient | null {
   return null
 }
 
-export function parseWhen(when: string): Date {
-  let date: Date
-  if (!when.includes('Z') && !when.includes('+') && !/-\d{2}:\d{2}$/.test(when)) {
-    date = new Date(when)
-  } else {
-    date = new Date(when)
+export function parseWhen(when: string, tz: string = DEFAULT_TZ): Date {
+  if (when.includes('Z') || when.includes('+') || /-\d{2}:\d{2}$/.test(when)) {
+    const d = new Date(when)
+    if (isNaN(d.getTime())) throw new Error(`Data/hora inválida: ${when}`)
+    return d
   }
 
-  if (isNaN(date.getTime())) {
-    throw new Error(`Data/hora inválida: ${when}`)
+  const match = when.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?/)
+  if (!match) {
+    const d = new Date(when)
+    if (isNaN(d.getTime())) throw new Error(`Data/hora inválida: ${when}`)
+    return d
   }
 
-  return date
+  const [, year, month, day, hour, minute, second = '00'] = match
+
+  const utcSimulated = new Date(
+    Date.UTC(
+      parseInt(year, 10),
+      parseInt(month, 10) - 1,
+      parseInt(day, 10),
+      parseInt(hour, 10),
+      parseInt(minute, 10),
+      parseInt(second, 10)
+    )
+  )
+
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: tz,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hourCycle: 'h23',
+  })
+
+  const parts = formatter.formatToParts(utcSimulated)
+  const getPart = (type: string) => parseInt(parts.find((p) => p.type === type)?.value || '0', 10)
+
+  const targetYear = getPart('year')
+  const targetMonth = getPart('month')
+  const targetDay = getPart('day')
+  const targetHour = getPart('hour')
+  const targetMinute = getPart('minute')
+
+  const tzSimulated = new Date(
+    Date.UTC(
+      targetYear,
+      targetMonth - 1,
+      targetDay,
+      targetHour,
+      targetMinute,
+      parseInt(second, 10)
+    )
+  )
+
+  const diffMs = utcSimulated.getTime() - tzSimulated.getTime()
+  return new Date(utcSimulated.getTime() + diffMs)
 }
 
 export async function createReminder(input: {
