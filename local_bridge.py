@@ -9,7 +9,7 @@ from mcp.client.sse import sse_client
 from mcp.server.stdio import stdio_server
 
 # Ajuste para a URL do seu deploy na Vercel (ou http://localhost:3000/api/mcp para dev local)
-DEFAULT_URL = "https://reminder-mcp.vercel.app/api/mcp"
+DEFAULT_URL = "https://reminder-mcp-thiago.vercel.app/api/mcp"
 
 
 async def pipe(source, dest):
