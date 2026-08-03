@@ -4,12 +4,11 @@
 
 const DEFAULT_SERVER_URL = 'https://ntfy.sh'
 const DEFAULT_TOPIC = 'reminders'
-const DEFAULT_DEV_TOKEN = 'tk_cg50zt2sueibh16jydupdlxkurd1g'
 
 export async function sendNotification(title: string, message: string): Promise<boolean> {
   const serverUrl = (process.env.NTFY_SERVER_URL || DEFAULT_SERVER_URL).replace(/\/$/, '')
   const topic = process.env.NTFY_TOPIC || DEFAULT_TOPIC
-  const token = process.env.NTFY_TOKEN || DEFAULT_DEV_TOKEN
+  const token = process.env.NTFY_TOKEN
 
   try {
     const headers: Record<string, string> = {
@@ -29,11 +28,22 @@ export async function sendNotification(title: string, message: string): Promise<
     }
 
     // Publicando via JSON POST no endpoint raiz do Ntfy (https://ntfy.sh/)
-    const response = await fetch(serverUrl, {
+    let response = await fetch(serverUrl, {
       method: 'POST',
       headers,
       body: JSON.stringify(payload),
     })
+
+    // Se falhar com 401 e foi enviado token de autorização, tenta novamente sem a header de autorização
+    if (response.status === 401 && headers['Authorization']) {
+      console.warn('[ntfy] Token de autorização recusado (401). Tentando enviar sem token...')
+      delete headers['Authorization']
+      response = await fetch(serverUrl, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(payload),
+      })
+    }
 
     if (!response.ok) {
       const errText = await response.text().catch(() => '')
@@ -47,3 +57,4 @@ export async function sendNotification(title: string, message: string): Promise<
     return false
   }
 }
+
